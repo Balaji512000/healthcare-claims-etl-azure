@@ -1,0 +1,10 @@
+# Core
+pyspark>=3.4.0
+delta-spark>=3.0.0
+azure-storage-file-datalake
+azure-identity
+
+# Dev/Test
+pytest
+flake8
+faker

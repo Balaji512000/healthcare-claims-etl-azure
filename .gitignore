@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Databricks / Jupyter
+.ipynb_checkpoints
+.databricks/
+.env
+
+# Spark / Hadoop
+.spark-stems/
+warehouse/
+metastore_db/
+derby.log
+
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific
+secrets.json
+local_settings.json
+datasets/raw/claims/
+datasets/raw/members/
+datasets/raw/providers/
+datasets/processed/
+adf_publish/
+*.bak
+*.tmp
