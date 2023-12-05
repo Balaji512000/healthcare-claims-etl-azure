@@ -1,0 +1,10 @@
+{
+  "env": "dev",
+  "storage_account": "stdatalakedev001",
+  "kv_name": "kv-health-dev-001",
+  "synapse_workspace": "syn-health-dev-001",
+  "dbw_workspace": "dbw-health-dev-001",
+  "cluster_id": "0123-456789-abcd123",
+  "batch_schedule": "0 1 * * *",
+  "alert_webhook": "https://hooks.internal.net/alerts/dev-etl"
+}
