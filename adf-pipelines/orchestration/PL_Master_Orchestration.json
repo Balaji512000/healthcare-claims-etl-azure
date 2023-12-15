@@ -1,0 +1,57 @@
+{
+  "name": "PL_Master_Orchestration",
+  "properties": {
+    "description": "Main batch wrapper. Bronze -> Silver -> Gold -> Synapse.",
+    "activities": [
+      {
+        "name": "Bronze Ingest",
+        "type": "ExecutePipeline",
+        "typeProperties": {
+          "pipeline": { "referenceName": "PL_Ingest_Raw_To_Bronze", "type": "PipelineReference" },
+          "waitOnCompletion": true
+        }
+      },
+      {
+        "name": "Silver Process",
+        "type": "ExecutePipeline",
+        "dependsOn": [ { "activity": "Bronze Ingest", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "pipeline": { "referenceName": "PL_Process_Bronze_To_Silver", "type": "PipelineReference" },
+          "waitOnCompletion": true
+        }
+      },
+      {
+        "name": "Gold Agg",
+        "type": "ExecutePipeline",
+        "dependsOn": [ { "activity": "Silver Process", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "pipeline": { "referenceName": "PL_Load_Silver_To_Gold", "type": "PipelineReference" },
+          "waitOnCompletion": true
+        }
+      },
+      {
+        "name": "Synapse Sync",
+        "type": "Copy",
+        "dependsOn": [ { "activity": "Gold Agg", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "source": { "type": "DeltaSource" },
+          "sink": { "type": "SqlPoolSink", "allowPolyBase": true },
+          "enableStaging": true
+        }
+      },
+      {
+        "name": "Bump Watermark",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [ { "activity": "Synapse Sync", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "storedProcedureName": "metadata.usp_update_watermark",
+          "storedProcedureParameters": {
+            "source_name": { "value": "claims" },
+            "new_watermark": { "value": "@utcnow()", "type": "Expression" }
+          }
+        },
+        "linkedServiceName": { "referenceName": "LS_AzureSQL_Control", "type": "LinkedServiceReference" }
+      }
+    ]
+  }
+}
