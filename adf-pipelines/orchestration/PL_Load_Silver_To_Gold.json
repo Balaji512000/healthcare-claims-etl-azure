@@ -1,0 +1,20 @@
+{
+  "name": "PL_Load_Silver_To_Gold",
+  "properties": {
+    "description": "Aggregates Silver data into Gold fact and KPI tables.",
+    "activities": [
+      {
+        "name": "Build Gold Layer",
+        "type": "DatabricksNotebook",
+        "policy": { "retry": 1, "retryIntervalInSeconds": 30 },
+        "typeProperties": {
+          "notebookPath": "/Shared/healthcare-etl/gold/03_Gold_Aggregations",
+          "baseParameters": {
+            "job_run_id": { "value": "@pipeline().RunId", "type": "Expression" }
+          }
+        },
+        "linkedServiceName": { "referenceName": "LS_AzureDatabricks", "type": "LinkedServiceReference" }
+      }
+    ]
+  }
+}

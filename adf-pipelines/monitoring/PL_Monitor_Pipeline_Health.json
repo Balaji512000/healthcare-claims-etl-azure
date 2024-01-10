@@ -1,0 +1,55 @@
+{
+  "name": "PL_Monitor_Pipeline_Health",
+  "properties": {
+    "description": "Daily check on pipeline status and data quality thresholds. Runs after the main batch to see if we need to wake anyone up.",
+    "activities": [
+      {
+        "name": "Get Last Run Status",
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": {
+              "value": "SELECT TOP 1\n    pipeline_name,\n    status,\n    input_rows,\n    output_rows,\n    quarantine_rows,\n    event_timestamp,\n    CASE WHEN quarantine_rows * 1.0 / NULLIF(input_rows, 0) * 100 > @{pipeline().parameters.quarantineThresholdPct} THEN 1 ELSE 0 END AS threshold_breached\nFROM metadata.pipeline_audit_log\nWHERE pipeline_name = 'PL_Master_Orchestration'\n    AND status IN ('COMPLETED', 'FAILED')\nORDER BY event_timestamp DESC",
+              "type": "Expression"
+            }
+          },
+          "dataset": { "referenceName": "DS_AuditLog_SQL", "type": "DatasetReference" },
+          "firstRowOnly": true
+        }
+      },
+      {
+        "name": "Trigger Alert if Needed",
+        "type": "IfCondition",
+        "dependsOn": [
+          { "activity": "Get Last Run Status", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": {
+          "expression": {
+            "value": "@or(equals(activity('Get Last Run Status').output.firstRow.status, 'FAILED'), equals(activity('Get Last Run Status').output.firstRow.threshold_breached, 1))",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "name": "Post to Alerts Channel",
+              "type": "WebActivity",
+              "typeProperties": {
+                "url": { "value": "@pipeline().parameters.alertWebhookUrl", "type": "Expression" },
+                "method": "POST",
+                "headers": { "Content-Type": "application/json" },
+                "body": {
+                  "value": "{\n  \"msg\": \"Pipeline Issue Detected\",\n  \"pipeline\": \"@{activity('Get Last Run Status').output.firstRow.pipeline_name}\",\n  \"status\": \"@{activity('Get Last Run Status').output.firstRow.status}\",\n  \"quarantine_rate\": \"@{activity('Get Last Run Status').output.firstRow.quarantine_rows} of @{activity('Get Last Run Status').output.firstRow.input_rows}\"\n}",
+                  "type": "Expression"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "parameters": {
+      "quarantineThresholdPct": { "type": "int", "defaultValue": 5 },
+      "alertWebhookUrl": { "type": "string", "defaultValue": "https://hooks.internal.net/alerts/etl" }
+    }
+  }
+}
