@@ -1,0 +1,36 @@
+{
+  "name": "PL_Process_Bronze_To_Silver",
+  "properties": {
+    "description": "Incremental load from Bronze to Silver. Handles cleansing and deduplication via Databricks.",
+    "activities": [
+      {
+        "name": "Lookup Watermark",
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": "SELECT last_watermark FROM metadata.pipeline_control WHERE source_name = 'claims'"
+          },
+          "dataset": { "referenceName": "DS_ControlTable_SQL", "type": "DatasetReference" },
+          "firstRowOnly": true
+        }
+      },
+      {
+        "name": "Cleanse and Dedup",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          { "activity": "Lookup Watermark", "dependencyConditions": ["Succeeded"] }
+        ],
+        "policy": { "retry": 1, "retryIntervalInSeconds": 30 },
+        "typeProperties": {
+          "notebookPath": "/Shared/healthcare-etl/silver/02_Silver_Cleansing",
+          "baseParameters": {
+            "watermark_ts": { "value": "@activity('Lookup Watermark').output.firstRow.last_watermark", "type": "Expression" },
+            "job_run_id": { "value": "@pipeline().RunId", "type": "Expression" }
+          }
+        },
+        "linkedServiceName": { "referenceName": "LS_AzureDatabricks", "type": "LinkedServiceReference" }
+      }
+    ]
+  }
+}
