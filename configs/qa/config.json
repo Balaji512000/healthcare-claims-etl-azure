@@ -1,0 +1,10 @@
+{
+  "env": "qa",
+  "storage_account": "stdatalakeqa001",
+  "kv_name": "kv-health-qa-001",
+  "synapse_workspace": "syn-health-qa-001",
+  "dbw_workspace": "dbw-health-qa-001",
+  "cluster_id": "9876-543210-fedcba",
+  "batch_schedule": "0 1 * * *",
+  "alert_webhook": "https://hooks.internal.net/alerts/qa-etl"
+}

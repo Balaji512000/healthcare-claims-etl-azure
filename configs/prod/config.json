@@ -1,0 +1,11 @@
+{
+  "env": "prod",
+  "storage_account": "stdatalakeprod001",
+  "kv_name": "kv-health-prod-001",
+  "synapse_workspace": "syn-health-prod-001",
+  "dbw_workspace": "dbw-health-prod-001",
+  "cluster_id": "5555-666677-prod-01",
+  "batch_schedule": "0 1 * * *",
+  "alert_webhook": "https://hooks.internal.net/alerts/prod-etl",
+  "enable_high_concurrency": true
+}
