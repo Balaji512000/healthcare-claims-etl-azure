@@ -1,0 +1,98 @@
+{
+  "name": "PL_Ingest_Raw_To_Bronze",
+  "properties": {
+    "description": "Ingests claims from raw to bronze. Checks for files first to avoid unnecessary cluster spin-ups.",
+    "activities": [
+      {
+        "name": "Start Audit Log",
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "metadata.usp_log_pipeline_event",
+          "storedProcedureParameters": {
+            "job_run_id":      { "value": { "value": "@pipeline().RunId", "type": "Expression" } },
+            "pipeline_name":   { "value": "PL_Ingest_Raw_To_Bronze" },
+            "layer":           { "value": "bronze" },
+            "status":          { "value": "STARTED" }
+          }
+        },
+        "linkedServiceName": { "referenceName": "LS_AzureSQL_Control", "type": "LinkedServiceReference" }
+      },
+      {
+        "name": "Check for Files",
+        "type": "GetMetadata",
+        "dependsOn": [ { "activity": "Start Audit Log", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "dataset": { "referenceName": "DS_ADLS_Raw_Landing", "type": "DatasetReference",
+            "parameters": { "container": "raw", "folderPath": { "value": "@pipeline().parameters.SourceFolder", "type": "Expression" } }
+          },
+          "fieldList": ["exists", "childItems"]
+        }
+      },
+      {
+        "name": "Files Found?",
+        "type": "IfCondition",
+        "dependsOn": [ { "activity": "Check for Files", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "expression": {
+            "value": "@and(activity('Check for Files').output.exists, greater(length(activity('Check for Files').output.childItems), 0))",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "name": "Trigger Bronze Notebook",
+              "type": "DatabricksNotebook",
+              "policy": { "timeout": "0.12:00:00", "retry": 2, "retryIntervalInSeconds": 60 },
+              "typeProperties": {
+                "notebookPath": "/Shared/healthcare-etl/bronze/01_Bronze_Ingestion",
+                "baseParameters": {
+                  "source_path":      { "value": "@concat('abfss://raw@', pipeline().parameters.StorageAccount, '.dfs.core.windows.net/', pipeline().parameters.SourceFolder, '/')", "type": "Expression" },
+                  "bronze_path":      { "value": "@concat('abfss://bronze@', pipeline().parameters.StorageAccount, '.dfs.core.windows.net/', pipeline().parameters.SourceFolder, '/')", "type": "Expression" },
+                  "checkpoint_path":  { "value": "@concat('abfss://bronze@', pipeline().parameters.StorageAccount, '.dfs.core.windows.net/_checkpoints/', pipeline().parameters.SourceFolder, '/')", "type": "Expression" },
+                  "table_name":       { "value": "@concat('bronze.', replace(pipeline().parameters.SourceFolder, '/', '_'))", "type": "Expression" },
+                  "job_run_id":       { "value": "@pipeline().RunId", "type": "Expression" }
+                }
+              },
+              "linkedServiceName": { "referenceName": "LS_AzureDatabricks", "type": "LinkedServiceReference" }
+            }
+          ],
+          "ifFalseActivities": [
+            {
+              "name": "Skip - No New Files",
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "metadata.usp_log_pipeline_event",
+                "storedProcedureParameters": {
+                  "job_run_id":      { "value": { "value": "@pipeline().RunId", "type": "Expression" } },
+                  "pipeline_name":   { "value": "PL_Ingest_Raw_To_Bronze" },
+                  "layer":           { "value": "bronze" },
+                  "status":          { "value": "SKIPPED" },
+                  "error_message":   { "value": "No new files to process." }
+                }
+              },
+              "linkedServiceName": { "referenceName": "LS_AzureSQL_Control", "type": "LinkedServiceReference" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "End Audit Log",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [ { "activity": "Files Found?", "dependencyConditions": ["Succeeded"] } ],
+        "typeProperties": {
+          "storedProcedureName": "metadata.usp_log_pipeline_event",
+          "storedProcedureParameters": {
+            "job_run_id":    { "value": { "value": "@pipeline().RunId", "type": "Expression" } },
+            "pipeline_name": { "value": "PL_Ingest_Raw_To_Bronze" },
+            "layer":         { "value": "bronze" },
+            "status":        { "value": "COMPLETED" }
+          }
+        },
+        "linkedServiceName": { "referenceName": "LS_AzureSQL_Control", "type": "LinkedServiceReference" }
+      }
+    ],
+    "parameters": {
+      "StorageAccount":  { "type": "string", "defaultValue": "stdatalakedev001" },
+      "SourceFolder":    { "type": "string", "defaultValue": "claims" }
+    }
+  }
+}
