@@ -1,0 +1,16 @@
+cpt_code,description,category,avg_reimbursement
+99213,Office or other outpatient visit established patient moderate complexity,E&M,125.00
+99214,Office or other outpatient visit established patient moderate-high complexity,E&M,190.00
+99232,Subsequent hospital care per day moderate complexity,E&M,145.00
+99283,Emergency department visit moderate severity,E&M,210.00
+99385,Initial preventive medicine evaluation 18-39 years,Preventive,220.00
+71046,Radiologic examination chest 2 views,Radiology,85.00
+93000,Electrocardiogram routine ECG with at least 12 leads,Cardiology,55.00
+80053,Comprehensive metabolic panel,Laboratory,45.00
+85025,Complete blood count with differential WBC,Laboratory,35.00
+36415,Collection of venous blood by venipuncture,Laboratory,20.00
+45378,Colonoscopy diagnostic,Gastroenterology,650.00
+93306,Echocardiography transthoracic real-time image with doppler,Cardiology,950.00
+27447,Total knee arthroplasty,Orthopedics,12500.00
+29881,Arthroscopy knee surgical with meniscectomy,Orthopedics,4200.00
+00810,Anesthesia lower intestinal endoscopic procedures,Anesthesia,380.00

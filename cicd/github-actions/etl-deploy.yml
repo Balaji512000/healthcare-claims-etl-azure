@@ -1,0 +1,56 @@
+name: ETL-CI-CD
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'documentation/**'
+      - 'README.md'
+      - '.gitignore'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSONs
+        run: |
+          # just a quick sanity check to make sure we didn't break the ARM templates
+          find . -name "*.json" -type f -exec json_verify < {} +
+        continue-on-error: false
+
+      - name: SQL Lint
+        run: |
+          # TODO: add sqlfluff here later, for now just checking they exist
+          ls sql-scripts/**/*.sql
+
+  deploy-dev:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_DEV }}
+
+      - name: Sync Notebooks
+        run: |
+          pip install databricks-cli
+          # overwriting shared folder for now to keep it simple
+          databricks workspace import_dir ./databricks-notebooks /Shared/healthcare-etl --overwrite
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_DEV }}
+
+      - name: Deploy ADF
+        uses: azure/data-factory-deploy-action@v1
+        with:
+          resourceGroupName: rg-healthcare-dev
+          dataFactoryName: adf-healthcare-dev-001
+          armTemplateFile: ./adf-pipelines/adf_arm_template.json
+          armTemplateParametersFile: ./configs/dev/config.json

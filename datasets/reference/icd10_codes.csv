@@ -1,0 +1,21 @@
+icd10_code,description,category,chronic_flag
+I10,Essential (primary) hypertension,Circulatory,1
+E11.9,Type 2 diabetes mellitus without complications,Endocrine,1
+J06.9,Acute upper respiratory infection unspecified,Respiratory,0
+M54.5,Low back pain,Musculoskeletal,0
+Z00.00,Encounter for general adult medical examination without abnormal findings,Preventive,0
+F32.9,Major depressive disorder single episode unspecified,Mental Health,1
+K21.0,Gastro-esophageal reflux disease with esophagitis,Digestive,1
+N39.0,Urinary tract infection site not specified,Genitourinary,0
+J18.9,Pneumonia unspecified organism,Respiratory,0
+I25.10,Atherosclerotic heart disease of native coronary artery without angina pectoris,Circulatory,1
+E78.5,Hyperlipidemia unspecified,Endocrine,1
+G47.00,Insomnia unspecified,Neurological,0
+M17.11,Primary osteoarthritis right knee,Musculoskeletal,1
+J45.901,Unspecified asthma with (acute) exacerbation,Respiratory,1
+Z12.11,Encounter for screening for malignant neoplasm of colon,Preventive,0
+I50.9,Heart failure unspecified,Circulatory,1
+E13.9,Other specified diabetes mellitus without complications,Endocrine,1
+R05.9,Cough unspecified,Respiratory,0
+M25.511,Pain in right shoulder,Musculoskeletal,0
+Z23,Encounter for immunization,Preventive,0
