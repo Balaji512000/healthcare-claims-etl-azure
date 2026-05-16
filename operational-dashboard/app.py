@@ -99,10 +99,14 @@ st.markdown("""
     .alert-warn { background-color: #FFFBEB; border-color: #D97706; color: #92400E; }
     .alert-err  { background-color: #FEF2F2; border-color: #DC2626; color: #991B1B; }
 
-    /* Hide Branding */
+    /* Hide Branding but keep Toggle Button */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    
+    /* Ensure Sidebar Toggle is accessible */
+    button[kind="header"] {
+        color: #0F172A !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
