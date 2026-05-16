@@ -1,5 +1,7 @@
 -- Presentation views for Power BI
 -- --------------------------------------------------------
+-- Note: These are optimized for DirectQuery. If report latency increases,
+-- we might need to materialize these as tables in the Gold layer instead.
 
 -- Monthly summary for the main executive dashboard
 CREATE OR ALTER VIEW healthcare.vw_monthly_claims_summary AS
