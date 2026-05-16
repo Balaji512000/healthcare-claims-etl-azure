@@ -24,65 +24,82 @@ def local_css():
     st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
+        /* Base styles */
         .main {
-            background-color: #ffffff !important;
+            background-color: #f8fafc !important;
             font-family: 'Inter', sans-serif;
         }
         [data-testid="stSidebar"] {
-            background-color: #f8fafc !important;
+            background-color: #ffffff !important;
             border-right: 1px solid #e2e8f0;
         }
-        /* Metric Card Overhaul */
+        
+        /* Metric Card Styling */
         .metric-card {
-            background-color: #f1f5f9;
+            background-color: #ffffff;
             border: 1px solid #e2e8f0;
             padding: 24px;
             border-radius: 12px;
-            text-align: left;
-            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease-in-out;
         }
         .metric-card:hover {
-            background-color: #e2e8f0;
-            transform: translateY(-2px);
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         .metric-label {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #64748b;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
         .metric-value {
             font-size: 1.8rem;
-            color: #0f172a;
+            color: #1e293b;
             font-weight: 700;
+            line-height: 1;
         }
         .metric-delta {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .delta-up { color: #10b981; }
         .delta-down { color: #ef4444; }
         
+        /* Headers */
         h1, h2, h3 {
             color: #0f172a !important;
             font-weight: 700;
         }
+        
+        /* Badges */
         .status-badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
         }
-        .status-prod { background-color: #dcfce7; color: #166534; }
-        .status-region { background-color: #e0f2fe; color: #075985; }
+        .status-prod { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .status-region { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
         
+        /* Clean up UI */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
+        
+        /* Table cleanup */
+        .stTable {
+            background-color: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -90,12 +107,14 @@ local_css()
 
 def custom_metric(label, value, delta, delta_type="up"):
     delta_class = "delta-up" if delta_type == "up" else "delta-down"
-    delta_symbol = "↑" if delta_type == "up" else "↓"
+    delta_symbol = "▲" if delta_type == "up" else "▼"
     st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">{label}</div>
             <div class="metric-value">{value}</div>
-            <div class="metric-delta {delta_class}">{delta_symbol} {delta}</div>
+            <div class="metric-delta {delta_class}">
+                <span>{delta_symbol}</span> {delta}
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -138,24 +157,24 @@ with st.sidebar:
     if os.path.exists("operational-dashboard/logo.png"):
         st.image("operational-dashboard/logo.png", use_container_width=True)
     
-    st.markdown('<div style="margin-top: 10px; margin-bottom: 20px; display: flex; gap: 8px;">'
+    st.markdown('<div style="margin: 20px 0; display: flex; gap: 8px;">'
                 '<span class="status-badge status-prod">PROD</span>'
                 '<span class="status-badge status-region">EAST US</span>'
                 '</div>', unsafe_allow_html=True)
     
-    menu = st.radio("PLATFORM OPS", 
-                   ["Overview", "Pipelines", "Quality", "System"],
+    menu = st.radio("PLATFORM CONSOLE", 
+                   ["Overview", "Pipelines", "Quality", "Architecture"],
                    index=0)
     
     st.divider()
-    st.caption("v1.4.2 | 2024.05.16")
+    st.caption("Azure Healthcare Claims ETL | v1.4.2")
 
 # --- MAIN CONTENT ---
 metrics = get_mock_metrics()
 
 if menu == "Overview":
     st.title("Operations Command Center")
-    st.markdown("Global telemetry for Azure Healthcare Data Platform.")
+    st.markdown("Real-time operational telemetry for the Medallion Data Platform.")
     
     # Custom Metric Grid
     c1, c2, c3, c4 = st.columns(4)
@@ -168,28 +187,32 @@ if menu == "Overview":
     with c4:
         custom_metric("Recon Anomalies", f"{metrics['reconcile_mismatch']}", "2", "up")
 
-    st.markdown('<div style="margin-top: 40px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin-top: 32px;"></div>', unsafe_allow_html=True)
     
     # Trends
     st.subheader("Ingestion Velocity")
     trends = get_daily_trends()
     fig = px.line(trends, x="Date", y="Volume", color_discrete_sequence=['#3b82f6'])
-    fig.update_layout(plot_bgcolor='white', paper_bgcolor='white', 
-                      margin=dict(l=0, r=0, t=10, b=0),
-                      xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=0, r=0, t=10, b=0),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=True, gridcolor='#e2e8f0')
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     col_a, col_b = st.columns(2)
     with col_a:
-        st.subheader("Active Alerts")
+        st.subheader("Active Incidents")
         st.info("**Latency:** CIGNA source feed delayed by 45m.")
-        st.warning("**Schema:** New CPT codes detected in Silver.")
+        st.warning("**Schema:** New CPT codes detected in Silver layer.")
     
     with col_b:
-        st.subheader("Job Status")
+        st.subheader("Execution Status")
         runs = pd.DataFrame({
-            "Process": ["Ingest", "Cleanse", "Agg", "Sync"],
-            "Status": ["OK", "OK", "WARN", "OK"]
+            "Stage": ["Ingest", "Cleanse", "Agg", "Sync"],
+            "Status": ["✅ Active", "✅ Active", "⚠️ Warning", "✅ Active"]
         })
         st.table(runs)
 
@@ -201,24 +224,25 @@ elif menu == "Pipelines":
         dict(Task="Gold", Start='2024-05-16 01:26', Finish='2024-05-16 01:35', Step="Agg"),
         dict(Task="Synapse", Start='2024-05-16 01:36', Finish='2024-05-16 01:45', Step="Serve"),
     ])
-    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Step")
+    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Step",
+                            color_discrete_sequence=px.colors.qualitative.Safe)
     st.plotly_chart(fig_gantt, use_container_width=True)
 
 elif menu == "Quality":
     st.title("Data Integrity")
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### Balancing")
+        st.markdown("#### Balancing Check")
         st.table(pd.DataFrame({
-            "Stage": ["Raw", "Bronze", "Silver", "Gold"],
-            "Count": [12450, 12450, 12398, 12398]
+            "Layer": ["Source", "Bronze", "Silver", "Gold"],
+            "Records": [12450, 12450, 12398, 12398]
         }))
     with col2:
-        st.markdown("#### Fill Rate")
+        st.markdown("#### Fill Rate Analysis")
         nulls = pd.DataFrame({"Field": ["member_id", "provider_id", "cpt"], "Fill%": [99.8, 99.2, 85.6]})
         st.plotly_chart(px.bar(nulls, x="Field", y="Fill%", color_discrete_sequence=['#10b981']), use_container_width=True)
 
-elif menu == "System":
-    st.title("System Architecture")
+elif menu == "Architecture":
+    st.title("Architecture Overview")
     if os.path.exists("operational-dashboard/architecture.png"):
         st.image("operational-dashboard/architecture.png", use_container_width=True)
