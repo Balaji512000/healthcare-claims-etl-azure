@@ -5,230 +5,244 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import logging
+import os
 
-# Configure logging for startup diagnostics
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- PAGE CONFIG ---
-try:
-    st.set_page_config(
-        page_title="Healthcare ETL Ops Portal",
-        page_icon="🏥",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-except Exception as e:
-    logger.error(f"Page config error: {e}")
+st.set_page_config(
+    page_title="Azure Healthcare ETL Ops",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-
-# --- CUSTOM CSS FOR INTERNAL OPS LOOK ---
+# --- THEME & CUSTOM CSS ---
 st.markdown("""
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+    /* Global Styles */
     .main {
-        background-color: #F8F9FA;
+        background-color: #f4f7f9;
+        font-family: 'Inter', sans-serif;
     }
-    .stMetric {
-        background-color: #FFFFFF;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 1px solid #e0e0e0;
     }
-    .status-up { color: #107C10; font-weight: bold; }
-    .status-down { color: #D13438; font-weight: bold; }
-    .status-warn { color: #FFB900; font-weight: bold; }
+    
+    /* Metric Card Styling */
+    div[data-testid="metric-container"] {
+        background-color: #ffffff;
+        border: 1px solid #e0e6ed;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease;
+    }
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+    }
+    
+    /* Header Styling */
+    h1, h2, h3 {
+        color: #1a202c;
+        font-weight: 700;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-prod { background-color: #e3f2fd; color: #1976d2; }
+    .status-region { background-color: #f1f8e9; color: #388e3c; }
+    
+    /* Table Styling */
+    .stTable {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    /* Custom Title Area */
+    .title-area {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    /* Hide Streamlit Branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # --- MOCK DATA ENGINE ---
 @st.cache_data
 def get_mock_metrics():
-    try:
-        return {
-            "total_claims": 124580,
-            "success_rate": 98.4,
-            "failed_claims": 1942,
-            "quarantine_count": 456,
-            "reconcile_mismatch": 12,
-            "avg_duration_mins": 24.5,
-            "last_run": datetime.now() - timedelta(hours=2)
-        }
-    except Exception as e:
-        logger.error(f"Error generating metrics: {e}")
-        return None
+    return {
+        "total_claims": 124580,
+        "success_rate": 98.4,
+        "failed_claims": 1942,
+        "quarantine_count": 456,
+        "reconcile_mismatch": 12,
+        "avg_duration_mins": 24.5,
+        "last_run": datetime.now() - timedelta(hours=2)
+    }
 
 @st.cache_data
 def get_daily_trends():
-    try:
-        dates = pd.date_range(end=datetime.now(), periods=30)
-        data = pd.DataFrame({
-            "Date": dates,
-            "Volume": np.random.randint(4000, 6000, size=30),
-            "Failed": np.random.randint(20, 100, size=30)
-        })
-        return data
-    except Exception as e:
-        logger.error(f"Error generating daily trends: {e}")
-        return pd.DataFrame()
+    dates = pd.date_range(end=datetime.now(), periods=30)
+    data = pd.DataFrame({
+        "Date": dates,
+        "Volume": np.random.randint(4000, 6000, size=30),
+        "Failed": np.random.randint(20, 100, size=30)
+    })
+    return data
 
 @st.cache_data
 def get_quarantine_data():
-    try:
-        reasons = ["null_claim_id", "negative_amount", "future_claim_date", "malformed_npi", "invalid_plan_id"]
-        data = pd.DataFrame({
-            "Claim ID": [f"CLM-{1000+i}" for i in range(10)],
-            "Reason": np.random.choice(reasons, 10),
-            "Provider ID": [f"PROV-{np.random.randint(500, 999)}" for _ in range(10)],
-            "Amount": np.random.uniform(50, 5000, 10).round(2),
-            "Ingested At": [datetime.now() - timedelta(hours=i) for i in range(10)]
-        })
-        return data
-    except Exception as e:
-        logger.error(f"Error generating quarantine data: {e}")
-        return pd.DataFrame()
+    reasons = ["null_claim_id", "negative_amount", "future_claim_date", "malformed_npi", "invalid_plan_id"]
+    return pd.DataFrame({
+        "Claim ID": [f"CLM-{1000+i}" for i in range(15)],
+        "Reason": np.random.choice(reasons, 15),
+        "Provider ID": [f"PROV-{np.random.randint(500, 999)}" for _ in range(15)],
+        "Amount": np.random.uniform(50, 5000, 15).round(2),
+        "Ingested At": [datetime.now() - timedelta(hours=i) for i in range(15)]
+    })
 
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.image("https://img.icons8.com/color/96/azure-data-factory.png", width=60)
-st.sidebar.title("ETL Ops Portal")
-st.sidebar.markdown("`Env: Production` | `Region: East US`")
+# --- SIDEBAR ---
+with st.sidebar:
+    if os.path.exists("operational-dashboard/logo.png"):
+        st.image("operational-dashboard/logo.png", use_container_width=True)
+    else:
+        st.title("🏥 ETL Ops")
+        
+    st.markdown('<div style="margin-bottom: 20px;">'
+                '<span class="status-badge status-prod">Prod Env</span> '
+                '<span class="status-badge status-region">East US</span>'
+                '</div>', unsafe_allow_html=True)
+    
+    menu = st.radio("Navigation", 
+                   ["Executive Summary", "Pipeline Monitoring", "Data Quality", "Architecture"],
+                   index=0)
+    
+    st.divider()
+    st.caption("v1.4.2-stable | Build: 2024.05.16.R1")
 
-menu = st.sidebar.selectbox(
-    "Navigation",
-    ["Executive Summary", "Pipeline Monitoring", "Data Quality & Recon", "Medallion Explorer", "Architecture"]
-)
-
+# --- MAIN CONTENT ---
 metrics = get_mock_metrics()
 
-# --- 1. EXECUTIVE SUMMARY ---
 if menu == "Executive Summary":
-    st.title("🏥 Healthcare Claims Pipeline Overview")
+    st.title("Healthcare Claims Pipeline")
+    st.markdown("Global operational overview for the Azure Medallion architecture.")
     
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Claims (30D)", f"{metrics['total_claims']:,}")
-    with col2:
-        st.metric("Success Rate", f"{metrics['success_rate']}%", "0.2%")
-    with col3:
-        st.metric("Quarantined", f"{metrics['quarantine_count']}", "-5", delta_color="inverse")
-    with col4:
+    # KPIs
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric("Total Claims (30D)", f"{metrics['total_claims']:,}", "↑ 12%")
+    with c2:
+        st.metric("SLA Success Rate", f"{metrics['success_rate']}%", "0.2%")
+    with c3:
+        st.metric("In Quarantine", f"{metrics['quarantine_count']}", "-5", delta_color="inverse")
+    with c4:
         st.metric("Recon Mismatches", f"{metrics['reconcile_mismatch']}", "2", delta_color="inverse")
 
-    st.subheader("Daily Ingestion Trend")
+    st.divider()
+    
+    # Trends
+    st.subheader("Daily Ingestion Activity")
     trends = get_daily_trends()
-    fig = px.line(trends, x="Date", y="Volume", title="Claim Volume (Bronze Ingestion)")
-    fig.add_bar(x=trends["Date"], y=trends["Failed"], name="Failed Records")
+    fig = px.area(trends, x="Date", y="Volume", 
+                  title="Bronze Layer Ingestion Volume",
+                  color_discrete_sequence=['#0078D4'])
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
-    col_a, col_b = st.columns(2)
+    col_a, col_b = st.columns([1, 1])
     with col_a:
         st.subheader("Operational Alerts")
-        st.info("⚠️ **Provider feed delayed:** CIGNA-NORTH-01 has not delivered files for the 06:00 window.")
-        st.warning("🚨 **Schema Drift:** New column `telehealth_indicator` detected in Bronze. Auto-merged to schema.")
-        st.error("🔥 **Reconciliation Alert:** Batch 20240516-A mismatch in Synapse (Source: 4502, Target: 4490)")
+        st.info("**Feed Delayed:** CIGNA-NORTH batch missing for 06:00 window.")
+        st.warning("**Schema Evolution:** New column `telehealth_flag` detected and merged.")
+        st.error("**Reconciliation:** Batch 20240516-A has 12 missing records in Gold.")
     
     with col_b:
-        st.subheader("Recent ADF Runs")
+        st.subheader("Latest Pipeline Executions")
         runs = pd.DataFrame({
-            "Run ID": ["ad45-12b", "df89-44x", "cc12-99p", "aa01-55k"],
-            "Pipeline": ["Master_Claims_ETL", "Master_Claims_ETL", "Reference_Sync", "Master_Claims_ETL"],
-            "Status": ["Succeeded", "Succeeded", "Failed", "Succeeded"],
-            "Duration": ["22m", "25m", "4m", "21m"]
+            "Run ID": ["ad45", "df89", "cc12", "aa01"],
+            "Pipeline": ["Master_ETL", "Master_ETL", "Ref_Sync", "Master_ETL"],
+            "Status": ["✅ Success", "✅ Success", "❌ Failed", "✅ Success"],
+            "Time": ["10:00", "08:00", "07:30", "06:00"]
         })
         st.table(runs)
 
-# --- 2. PIPELINE MONITORING ---
 elif menu == "Pipeline Monitoring":
-    st.title("⚙️ Pipeline Run Monitoring")
+    st.title("Pipeline Run Monitoring")
     
-    st.markdown("### ADF Execution Timeline")
-    # Simulation of ADF runs
+    st.markdown("### ADF Execution Sequence")
     df_runs = pd.DataFrame([
-        dict(Task="Bronze Ingest", Start='2024-05-16 01:00', Finish='2024-05-16 01:10', Resource="Databricks"),
-        dict(Task="Silver Cleanse", Start='2024-05-16 01:12', Finish='2024-05-16 01:25', Resource="Databricks"),
-        dict(Task="Gold Aggs", Start='2024-05-16 01:26', Finish='2024-05-16 01:35', Resource="Databricks"),
-        dict(Task="Synapse Sync", Start='2024-05-16 01:36', Finish='2024-05-16 01:45', Resource="ADF Copy"),
+        dict(Task="Bronze Ingest", Start='2024-05-16 01:00', Finish='2024-05-16 01:10', Step="Ingest"),
+        dict(Task="Silver Cleanse", Start='2024-05-16 01:12', Finish='2024-05-16 01:25', Step="Cleansing"),
+        dict(Task="Gold Aggs", Start='2024-05-16 01:26', Finish='2024-05-16 01:35', Step="Aggregations"),
+        dict(Task="Synapse Sync", Start='2024-05-16 01:36', Finish='2024-05-16 01:45', Step="Serving"),
     ])
-    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Resource")
+    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Step",
+                            color_discrete_sequence=px.colors.qualitative.Pastel)
     st.plotly_chart(fig_gantt, use_container_width=True)
 
-    st.subheader("Failed Claims & Quarantine")
-    st.write("Records that failed validation in the Silver layer.")
+    st.subheader("Quarantine Review (Silver Layer)")
     q_data = get_quarantine_data()
     st.dataframe(q_data, use_container_width=True)
     
-    if st.button("Replay Quarantine Batch"):
-        st.toast("Simulation: Triggering ADF Pipeline `Retry_Quarantine_Records`...")
-        st.success("Job triggered. Tracking ID: REPLAY-9923")
+    if st.button("Manual Retry: Replay Quarantine Batch"):
+        st.toast("Triggering ADF Pipeline `Retry_Quarantine`...")
+        st.success("Request sent. Tracking ID: REPLAY-9923")
 
-# --- 3. DATA QUALITY & RECON ---
-elif menu == "Data Quality & Recon":
-    st.title("📊 Data Quality & Reconciliation")
+elif menu == "Data Quality":
+    st.title("Data Integrity & Reconciliation")
     
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### Source vs Target Reconciliation")
+        st.markdown("#### Medallion Reconciliation")
         recon = pd.DataFrame({
-            "Layer": ["Source (Files)", "Bronze (Delta)", "Silver (Delta)", "Gold (Fact)", "Synapse (SQL)"],
-            "Record Count": [12450, 12450, 12398, 12398, 12398],
-            "Status": ["✅", "✅", "⚠️ (52 Quarantined)", "✅", "✅"]
+            "Layer": ["Source Files", "Bronze Delta", "Silver Delta", "Gold Fact", "Synapse SQL"],
+            "Count": [12450, 12450, 12398, 12398, 12398],
+            "Delta": ["-", "0", "-52", "0", "0"]
         })
         st.table(recon)
     
     with col2:
-        st.markdown("#### Null Validation (Silver)")
+        st.markdown("#### Provider Validation Nulls")
         nulls = pd.DataFrame({
-            "Column": ["claim_id", "member_id", "provider_id", "claim_date", "diagnosis_code"],
-            "Null Rate": [0.0, 0.02, 0.01, 0.0, 0.15]
+            "Field": ["claim_id", "member_id", "npi_code", "icd10", "amt"],
+            "Null%": [0.0, 1.2, 0.8, 15.4, 0.0]
         })
-        fig_nulls = px.bar(nulls, x="Column", y="Null Rate", title="Missing Data %")
+        fig_nulls = px.bar(nulls, x="Field", y="Null%", title="Missing Values per Field",
+                           color_discrete_sequence=['#FF4B4B'])
         st.plotly_chart(fig_nulls, use_container_width=True)
 
-# --- 4. MEDALLION EXPLORER ---
-elif menu == "Medallion Explorer":
-    st.title("💎 Medallion Layer Explorer")
-    
-    tab1, tab2, tab3 = st.tabs(["Raw / Bronze", "Silver (Cleaned)", "Gold (KPIs)"])
-    
-    with tab1:
-        st.markdown("**Bronze:** Schema-on-read AutoLoader landing.")
-        st.code("""SELECT * FROM bronze.claims LIMIT 5""", language="sql")
-        st.caption("Latest Batch Metadata: `_source_file`: claims_20240516.csv | `_ingest_ts`: 2024-05-16 01:05:22")
-    
-    with tab2:
-        st.markdown("**Silver:** Type casting, null handling, and deduplication.")
-        sample_silver = pd.DataFrame({
-            "claim_id": ["C1", "C2", "C3"],
-            "amount": [1200.50, 450.00, 3200.00],
-            "status": ["PAID", "DENIED", "PENDING"],
-            "provider_npi": ["1234567890", "0987654321", "1122334455"]
-        })
-        st.dataframe(sample_silver)
-    
-    with tab3:
-        st.markdown("**Gold:** Business-level aggregations.")
-        fig_kpi = px.pie(values=[75, 15, 10], names=["Paid", "Rejected", "Pending"], title="Claims Distribution")
-        st.plotly_chart(fig_kpi)
-
-# --- 5. ARCHITECTURE ---
 elif menu == "Architecture":
-    st.title("🏗️ Platform Architecture")
+    st.title("Platform Architecture")
     
-    st.image("https://raw.githubusercontent.com/MicrosoftDocs/azure-docs/master/articles/architecture/solution-ideas/media/modern-data-warehouse.png", caption="Conceptual Azure Data Platform Flow")
-    
-    st.markdown("""
-    ### Tech Stack
-    - **Orchestration:** Azure Data Factory (ADF)
-    - **Compute:** Azure Databricks (Spark 3.4, Delta Lake)
-    - **Storage:** Azure Data Lake Storage (ADLS Gen2)
-    - **Warehouse:** Azure Synapse Analytics (Dedicated SQL Pool)
-    - **Monitoring:** Streamlit (this portal) & Log Analytics
-    
-    ### Key Engineering Patterns
-    - **Incremental Loading:** Watermark-based logic in `pipeline_control`.
-    - **Quarantine:** Automatic routing of bad records to a separate Delta path.
-    - **Medallion Design:** Decoupling raw ingestion from business logic.
-    - **Schema Evolution:** Using Delta's `mergeSchema` to handle source changes.
-    """)
+    if os.path.exists("operational-dashboard/architecture.png"):
+        st.image("operational-dashboard/architecture.png", use_container_width=True)
+    else:
+        st.info("Architecture diagram rendering...")
 
-st.sidebar.divider()
-st.sidebar.caption("v1.4.2-stable | Build: 2024.05.16.R1")
+    st.markdown("""
+    ### System Components
+    - **ADF:** Master orchestration and control flow.
+    - **Databricks:** Spark-based Medallion processing (Bronze/Silver/Gold).
+    - **Synapse:** Serving layer for high-concurrency BI.
+    - **Delta Lake:** Transactional storage with schema enforcement.
+    """)
