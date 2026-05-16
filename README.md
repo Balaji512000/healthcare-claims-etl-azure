@@ -1,13 +1,22 @@
-# Healthcare Claims ETL
+# Healthcare Claims ETL Platform (Azure)
 
 Batch pipeline for processing insurance claims on Azure. 
 
 Raw files (CSV) land in ADLS, processed through Bronze/Silver/Gold layers in Databricks, and synced to a Synapse SQL Pool for Power BI.
 
-This repo represents the evolution of our claim processing engine over the last ~4 months, moving from basic batch scripts to an incremental Medallion flow.
+## Pipeline Architecture
+- **Ingestion:** ADF + AutoLoader (Bronze)
+- **Transformation:** Spark/Delta Lake (Silver/Gold)
+- **Serving:** Azure Synapse Analytics
+- **Operations:** Streamlit-based Ops Portal
 
-## Pipeline Flow
+## Operational Monitoring
+We maintain an internal Streamlit dashboard for real-time pipeline monitoring and data quality oversight.
+- **Location:** `operational-dashboard/`
+- **Features:** Ingestion trends, reconciliation status, quarantine explorer.
+- [View Dashboard Setup Guide](operational-dashboard/README.md)
 
+## Medallion Flow
 1. **Bronze:** AutoLoader reads from `raw/` and appends to Delta. Immutable ledger.
 2. **Silver:** Incremental load using watermarks. Cleans types, handles basic dedup, and quarentines bad rows (null IDs, etc).
 3. **Gold:** Rebuilds facts and refreshes provider KPIs. 
