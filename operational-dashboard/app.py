@@ -20,72 +20,54 @@ st.set_page_config(
 )
 
 # --- THEME & CUSTOM CSS ---
-st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-    /* Global Styles */
-    .main {
-        background-color: #f4f7f9;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #e0e0e0;
-    }
-    
-    /* Metric Card Styling */
-    div[data-testid="metric-container"] {
-        background-color: #ffffff;
-        border: 1px solid #e0e6ed;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        transition: transform 0.2s ease;
-    }
-    div[data-testid="metric-container"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.05);
-    }
-    
-    /* Header Styling */
-    h1, h2, h3 {
-        color: #1a202c;
-        font-weight: 700;
-    }
-    
-    /* Status Badges */
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    .status-prod { background-color: #e3f2fd; color: #1976d2; }
-    .status-region { background-color: #f1f8e9; color: #388e3c; }
-    
-    /* Table Styling */
-    .stTable {
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    
-    /* Custom Title Area */
-    .title-area {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    /* Hide Streamlit Branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-""", unsafe_allow_html=True)
+def local_css():
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+        .main {
+            background-color: #f4f7f9 !important;
+            font-family: 'Inter', sans-serif;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #ffffff !important;
+            border-right: 1px solid #e0e0e0;
+        }
+        div[data-testid="metric-container"] {
+            background-color: #ffffff;
+            border: 1px solid #e0e6ed;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease;
+        }
+        div[data-testid="metric-container"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+        }
+        h1, h2, h3 {
+            color: #1a202c !important;
+            font-weight: 700;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-prod { background-color: #e3f2fd; color: #1976d2; }
+        .status-region { background-color: #f1f8e9; color: #388e3c; }
+        .stTable {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+local_css()
 
 # --- MOCK DATA ENGINE ---
 @st.cache_data
