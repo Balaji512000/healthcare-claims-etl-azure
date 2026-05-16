@@ -4,14 +4,23 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import logging
+
+# Configure logging for startup diagnostics
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # --- PAGE CONFIG ---
-st.set_page_config(
-    page_title="Healthcare ETL Ops Portal",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+try:
+    st.set_page_config(
+        page_title="Healthcare ETL Ops Portal",
+        page_icon="🏥",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+except Exception as e:
+    logger.error(f"Page config error: {e}")
+
 
 # --- CUSTOM CSS FOR INTERNAL OPS LOOK ---
 st.markdown("""
@@ -34,37 +43,49 @@ st.markdown("""
 # --- MOCK DATA ENGINE ---
 @st.cache_data
 def get_mock_metrics():
-    return {
-        "total_claims": 124580,
-        "success_rate": 98.4,
-        "failed_claims": 1942,
-        "quarantine_count": 456,
-        "reconcile_mismatch": 12,
-        "avg_duration_mins": 24.5,
-        "last_run": datetime.now() - timedelta(hours=2)
-    }
+    try:
+        return {
+            "total_claims": 124580,
+            "success_rate": 98.4,
+            "failed_claims": 1942,
+            "quarantine_count": 456,
+            "reconcile_mismatch": 12,
+            "avg_duration_mins": 24.5,
+            "last_run": datetime.now() - timedelta(hours=2)
+        }
+    except Exception as e:
+        logger.error(f"Error generating metrics: {e}")
+        return None
 
 @st.cache_data
 def get_daily_trends():
-    dates = pd.date_range(end=datetime.now(), periods=30)
-    data = pd.DataFrame({
-        "Date": dates,
-        "Volume": np.random.randint(4000, 6000, size=30),
-        "Failed": np.random.randint(20, 100, size=30)
-    })
-    return data
+    try:
+        dates = pd.date_range(end=datetime.now(), periods=30)
+        data = pd.DataFrame({
+            "Date": dates,
+            "Volume": np.random.randint(4000, 6000, size=30),
+            "Failed": np.random.randint(20, 100, size=30)
+        })
+        return data
+    except Exception as e:
+        logger.error(f"Error generating daily trends: {e}")
+        return pd.DataFrame()
 
 @st.cache_data
 def get_quarantine_data():
-    reasons = ["null_claim_id", "negative_amount", "future_claim_date", "malformed_npi", "invalid_plan_id"]
-    data = pd.DataFrame({
-        "Claim ID": [f"CLM-{1000+i}" for i in range(10)],
-        "Reason": np.random.choice(reasons, 10),
-        "Provider ID": [f"PROV-{np.random.randint(500, 999)}" for _ in range(10)],
-        "Amount": np.random.uniform(50, 5000, 10).round(2),
-        "Ingested At": [datetime.now() - timedelta(hours=i) for i in range(10)]
-    })
-    return data
+    try:
+        reasons = ["null_claim_id", "negative_amount", "future_claim_date", "malformed_npi", "invalid_plan_id"]
+        data = pd.DataFrame({
+            "Claim ID": [f"CLM-{1000+i}" for i in range(10)],
+            "Reason": np.random.choice(reasons, 10),
+            "Provider ID": [f"PROV-{np.random.randint(500, 999)}" for _ in range(10)],
+            "Amount": np.random.uniform(50, 5000, 10).round(2),
+            "Ingested At": [datetime.now() - timedelta(hours=i) for i in range(10)]
+        })
+        return data
+    except Exception as e:
+        logger.error(f"Error generating quarantine data: {e}")
+        return pd.DataFrame()
 
 # --- SIDEBAR NAVIGATION ---
 st.sidebar.image("https://img.icons8.com/color/96/azure-data-factory.png", width=60)
