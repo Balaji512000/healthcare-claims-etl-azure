@@ -29,55 +29,57 @@ def local_css():
             font-family: 'Inter', sans-serif;
         }
         [data-testid="stSidebar"] {
-            background-color: #fcfcfc !important;
-            border-right: 1px solid #eeeeee;
+            background-color: #f8fafc !important;
+            border-right: 1px solid #e2e8f0;
         }
-        div[data-testid="metric-container"] {
-            background-color: #f8fafc;
+        /* Metric Card Overhaul */
+        .metric-card {
+            background-color: #f1f5f9;
             border: 1px solid #e2e8f0;
             padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            text-align: left;
+            transition: all 0.2s ease;
         }
-        div[data-testid="metric-container"]:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-            border-color: #cbd5e1;
-            background-color: #ffffff;
+        .metric-card:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
         }
-        div[data-testid="stMetricValue"] {
-            font-size: 2.2rem !important;
-            font-weight: 700 !important;
-            color: #0f172a !important;
-        }
-        div[data-testid="stMetricLabel"] {
-            font-size: 0.9rem !important;
-            font-weight: 600 !important;
-            color: #64748b !important;
+        .metric-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.025em;
-            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
         }
+        .metric-value {
+            font-size: 1.8rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .metric-delta {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .delta-up { color: #10b981; }
+        .delta-down { color: #ef4444; }
+        
         h1, h2, h3 {
             color: #0f172a !important;
             font-weight: 700;
         }
         .status-badge {
-            padding: 6px 14px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
         .status-prod { background-color: #dcfce7; color: #166534; }
         .status-region { background-color: #e0f2fe; color: #075985; }
-        .stTable {
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #f1f5f9;
-        }
+        
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
@@ -85,6 +87,17 @@ def local_css():
     """, unsafe_allow_html=True)
 
 local_css()
+
+def custom_metric(label, value, delta, delta_type="up"):
+    delta_class = "delta-up" if delta_type == "up" else "delta-down"
+    delta_symbol = "↑" if delta_type == "up" else "↓"
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            <div class="metric-delta {delta_class}">{delta_symbol} {delta}</div>
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- MOCK DATA ENGINE ---
 @st.cache_data
@@ -124,128 +137,88 @@ def get_quarantine_data():
 with st.sidebar:
     if os.path.exists("operational-dashboard/logo.png"):
         st.image("operational-dashboard/logo.png", use_container_width=True)
-    else:
-        st.title("🏥 ETL Ops")
-        
-    st.markdown('<div style="margin-bottom: 24px; display: flex; gap: 8px;">'
-                '<span class="status-badge status-prod">Prod</span>'
-                '<span class="status-badge status-region">East US</span>'
+    
+    st.markdown('<div style="margin-top: 10px; margin-bottom: 20px; display: flex; gap: 8px;">'
+                '<span class="status-badge status-prod">PROD</span>'
+                '<span class="status-badge status-region">EAST US</span>'
                 '</div>', unsafe_allow_html=True)
     
-    menu = st.radio("Management Console", 
-                   ["Executive Summary", "Pipeline Monitoring", "Data Quality", "Architecture"],
+    menu = st.radio("PLATFORM OPS", 
+                   ["Overview", "Pipelines", "Quality", "System"],
                    index=0)
     
     st.divider()
-    st.caption("v1.4.2-stable | Azure Healthcare")
+    st.caption("v1.4.2 | 2024.05.16")
 
 # --- MAIN CONTENT ---
 metrics = get_mock_metrics()
 
-if menu == "Executive Summary":
+if menu == "Overview":
     st.title("Operations Command Center")
-    st.markdown("Real-time telemetry for Healthcare Claims Medallion pipelines.")
+    st.markdown("Global telemetry for Azure Healthcare Data Platform.")
     
-    st.markdown('<div style="margin-top: 20px;"></div>', unsafe_allow_html=True)
-    
-    # KPIs with Icons
+    # Custom Metric Grid
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Total Throughput", f"{metrics['total_claims']:,}", "↑ 12%")
+        custom_metric("Total Throughput", f"{metrics['total_claims']:,}", "12%", "up")
     with c2:
-        st.metric("Pipeline Accuracy", f"{metrics['success_rate']}%", "0.2%")
+        custom_metric("Pipeline Accuracy", f"{metrics['success_rate']}%", "0.2%", "up")
     with c3:
-        st.metric("Quarantine Pool", f"{metrics['quarantine_count']}", "-5", delta_color="inverse")
+        custom_metric("Quarantine Pool", f"{metrics['quarantine_count']}", "5", "down")
     with c4:
-        st.metric("Recon Anomalies", f"{metrics['reconcile_mismatch']}", "2", delta_color="inverse")
+        custom_metric("Recon Anomalies", f"{metrics['reconcile_mismatch']}", "2", "up")
 
     st.markdown('<div style="margin-top: 40px;"></div>', unsafe_allow_html=True)
     
     # Trends
-    st.subheader("Ingestion Velocity (Bronze)")
+    st.subheader("Ingestion Velocity")
     trends = get_daily_trends()
-    fig = px.area(trends, x="Date", y="Volume", 
-                  color_discrete_sequence=['#3b82f6'])
-    fig.update_layout(
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        margin=dict(l=0, r=0, t=20, b=0),
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
-    )
+    fig = px.line(trends, x="Date", y="Volume", color_discrete_sequence=['#3b82f6'])
+    fig.update_layout(plot_bgcolor='white', paper_bgcolor='white', 
+                      margin=dict(l=0, r=0, t=10, b=0),
+                      xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
     st.plotly_chart(fig, use_container_width=True)
 
-    col_a, col_b = st.columns([1, 1])
+    col_a, col_b = st.columns(2)
     with col_a:
-        st.subheader("Operational Alerts")
-        st.info("**Data Latency:** CIGNA source feed delayed by 45 mins.")
-        st.warning("**Schema Evolution:** Auto-detecting new CPT codes in Silver.")
-        st.error("**Reconciliation:** 12 records orphaned in Synapse landing.")
+        st.subheader("Active Alerts")
+        st.info("**Latency:** CIGNA source feed delayed by 45m.")
+        st.warning("**Schema:** New CPT codes detected in Silver.")
     
     with col_b:
-        st.subheader("Sync Status")
+        st.subheader("Job Status")
         runs = pd.DataFrame({
-            "Job": ["Ingest_Raw", "Cleanse_Silver", "Agg_Gold", "Sync_Synapse"],
-            "Status": ["✅ Active", "✅ Active", "⚠️ Delayed", "✅ Active"],
-            "Last Run": ["10:05", "10:15", "10:30", "11:00"]
+            "Process": ["Ingest", "Cleanse", "Agg", "Sync"],
+            "Status": ["OK", "OK", "WARN", "OK"]
         })
         st.table(runs)
 
-elif menu == "Pipeline Monitoring":
+elif menu == "Pipelines":
     st.title("Pipeline Run Monitoring")
-    
-    st.markdown("### ADF Execution Sequence")
     df_runs = pd.DataFrame([
-        dict(Task="Bronze Ingest", Start='2024-05-16 01:00', Finish='2024-05-16 01:10', Step="Ingest"),
-        dict(Task="Silver Cleanse", Start='2024-05-16 01:12', Finish='2024-05-16 01:25', Step="Cleansing"),
-        dict(Task="Gold Aggs", Start='2024-05-16 01:26', Finish='2024-05-16 01:35', Step="Aggregations"),
-        dict(Task="Synapse Sync", Start='2024-05-16 01:36', Finish='2024-05-16 01:45', Step="Serving"),
+        dict(Task="Bronze", Start='2024-05-16 01:00', Finish='2024-05-16 01:10', Step="Ingest"),
+        dict(Task="Silver", Start='2024-05-16 01:12', Finish='2024-05-16 01:25', Step="Clean"),
+        dict(Task="Gold", Start='2024-05-16 01:26', Finish='2024-05-16 01:35', Step="Agg"),
+        dict(Task="Synapse", Start='2024-05-16 01:36', Finish='2024-05-16 01:45', Step="Serve"),
     ])
-    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Step",
-                            color_discrete_sequence=px.colors.qualitative.Bold)
+    fig_gantt = px.timeline(df_runs, x_start="Start", x_end="Finish", y="Task", color="Step")
     st.plotly_chart(fig_gantt, use_container_width=True)
 
-    st.subheader("Quarantine Ledger")
-    q_data = get_quarantine_data()
-    st.dataframe(q_data, use_container_width=True)
-    
-    if st.button("Trigger Manual Recovery"):
-        st.toast("Starting Recovery Pipeline...")
-        st.success("ADF Instance: REC-8821 triggered.")
-
-elif menu == "Data Quality":
+elif menu == "Quality":
     st.title("Data Integrity")
-    
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### Record Balancing")
-        recon = pd.DataFrame({
-            "Stage": ["Raw", "Bronze", "Silver", "Gold", "SQL"],
-            "Records": [12450, 12450, 12398, 12398, 12398],
-            "Status": ["OK", "OK", "-52", "OK", "OK"]
-        })
-        st.table(recon)
-    
+        st.markdown("#### Balancing")
+        st.table(pd.DataFrame({
+            "Stage": ["Raw", "Bronze", "Silver", "Gold"],
+            "Count": [12450, 12450, 12398, 12398]
+        }))
     with col2:
-        st.markdown("#### Field Completeness")
-        nulls = pd.DataFrame({
-            "Field": ["member_id", "provider_id", "cpt_code", "diagnosis"],
-            "Fill%": [99.8, 99.2, 85.6, 98.4]
-        })
-        fig_nulls = px.bar(nulls, x="Field", y="Fill%", color_discrete_sequence=['#10b981'])
-        st.plotly_chart(fig_nulls, use_container_width=True)
+        st.markdown("#### Fill Rate")
+        nulls = pd.DataFrame({"Field": ["member_id", "provider_id", "cpt"], "Fill%": [99.8, 99.2, 85.6]})
+        st.plotly_chart(px.bar(nulls, x="Field", y="Fill%", color_discrete_sequence=['#10b981']), use_container_width=True)
 
-elif menu == "Architecture":
+elif menu == "System":
     st.title("System Architecture")
-    
     if os.path.exists("operational-dashboard/architecture.png"):
         st.image("operational-dashboard/architecture.png", use_container_width=True)
-    
-    st.markdown("""
-    ---
-    ### Technical Stack
-    - **Control Plane:** Azure Data Factory
-    - **Compute Engine:** Databricks / Spark SQL
-    - **Storage Fabric:** Delta Lake on ADLS Gen2
-    - **Analytical Engine:** Azure Synapse SQL Pool
-    """)
